@@ -1,11 +1,11 @@
 # bot.py
 import os
 import subprocess
-import time
 import re
 import discord
 from dotenv import load_dotenv
 from discord import Intents
+from discord.ext import commands
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -13,7 +13,6 @@ GUILD = os.getenv('DISCORD_GUILD')
 
 intents = Intents.all()
 client = discord.Client(intents=intents)
-
 
 
 def escape_special_chars(s):
@@ -33,7 +32,6 @@ def type_message(message):
     # Open the input box
     command = f"adb shell input tap 677 1032"
     subprocess.call(["/bin/bash", "-c", command])
-    time.sleep(1)
 
     # Execute the command
     command = f'adb shell input text "{message}"'
@@ -43,8 +41,6 @@ def type_message(message):
     # Send an enter key event
     command = "adb shell input keyevent KEYCODE_ENTER"
     subprocess.call(["/bin/bash", "-c", command])
-
-
 
 
 @client.event
@@ -58,35 +54,20 @@ async def on_ready():
         f'{guild.name}(id: {guild.id})'
     )
 
+from discord.ext import commands
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
+client = commands.Bot(command_prefix='/', intents=intents) # Set the command prefix to '/'
+
+@client.command()
+async def relay(ctx, *, message): # Define the relay command
+    if ctx.author == client.user:
         return
     
     print("Message received")
-    await message.channel.send(f'Sending message {message.content} to Clash')
-    type_message(message.content)
+    await ctx.send(f'Sending message: "{message}" to Clash')
+    type_message(message)
 
 client.run(TOKEN)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
