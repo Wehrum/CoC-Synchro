@@ -8,11 +8,10 @@ from dotenv import load_dotenv
 from discord import Intents
 from discord import app_commands
 
-MY_GUILD = discord.Object(id=349593031579533312)
-
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
+MY_GUILD = discord.Object(id=GUILD)
 
 class MyClient(discord.Client):
     def __init__(self, *, intents: discord.Intents):
@@ -36,11 +35,20 @@ class MyClient(discord.Client):
 
 intents = discord.Intents.all()
 client = MyClient(intents=intents)
+debug=True
 
 @client.tree.command()
 async def hello(interaction: discord.Interaction):
     """Says hello!"""
-    await interaction.response.send_message(f'Hi, {interaction.user.mention}')
+    with open("loader.gif", "rb") as f:
+        file = discord.File(f)
+    await interaction.response.send_message(f'Loading, {interaction.user.mention}', file=file)
+    message = await interaction.original_response()
+    time.sleep(2)
+    with open("OIP.jpg", "rb") as f:
+        file = discord.File(f)
+    await interaction.followup.delete_message(message.id)
+    await interaction.channel.send(f'Loading, {interaction.user.mention}', file=file)
 
 @client.tree.command()
 @app_commands.describe(
@@ -59,23 +67,33 @@ async def add(interaction: discord.Interaction, first_value: int, second_value: 
 @app_commands.describe(text_to_send='Text to send in CoC chat')
 async def relay(interaction: discord.Interaction, text_to_send: str):
     """Sends a message to the Clash of Clans chat."""
-    await interaction.response.send_message(f'Sent: "{text_to_send}" to CoC chat')
+    await interaction.response.send_message(f'Sending: "{text_to_send}" to CoC chat')
     open_chat()
     type_message(text_to_send)
     # Send an enter key event
     command = "adb shell input keyevent KEYCODE_ENTER"
     subprocess.call(["/bin/bash", "-c", command])
+    await interaction.followup.edit_message("Sent!")
 
 @client.tree.command()
+@app_commands.rename(text_to_send='text')
 @app_commands.describe(text_to_send='Text to send in CoC clan mail')
 async def mail(interaction: discord.Interaction, text_to_send: str):
     """Sends a mail to the Clash of Clans clan mail system."""
-    await interaction.response.send_message(f'Sent: "{text_to_send}" to CoC clan mail')
+    embed = discord.Embed()
+    embed.set_image(url="https://www.botech-shop.com/img/loader.gif")
+    await interaction.response.send_message(f'Sending: "{text_to_send}" to CoC clan mail', ephemeral=True, embed=embed)
+    message = await interaction.original_response()
     open_clan_mail()
     type_message(text_to_send)
     # Hit Send
     command = f"adb shell input tap 1191 152"
     subprocess.call(["/bin/bash", "-c", command])
+    embed = discord.Embed()
+    embed.set_image(url="https://www.botech-shop.com/img/loader.gif")
+    await message.edit(content=f'Sent: "{text_to_send}" to CoC clan mail', embed="https://media.discordapp.net/attachments/1085328897199050782/1085632955466137711/OIP.jpg?width=36&height=36")
+    #await interaction.channel.send(f'Sent: "{text_to_send}" to CoC clan mail', file=file)
+    
 
 def escape_special_chars(s):
     return re.sub(r'(?<!\\)([\'"\\()])', r'\\\1', s)
@@ -83,31 +101,43 @@ def escape_special_chars(s):
 def open_clan_mail():
     # Open Menu
     command = f"adb shell input tap 76 65"
+    if debug is True:
+        print(f'Debug: {command}')
     subprocess.call(["/bin/bash", "-c", command])
     time.sleep(1)
 
     # Open My Clan
     command = f"adb shell input tap 815 72"
+    if debug is True:
+        print(f'Debug: {command}')
     subprocess.call(["/bin/bash", "-c", command])
     time.sleep(1)
     
     # Open Send Mail
     command = f"adb shell input tap 1272 736"
+    if debug is True:
+        print(f'Debug: {command}')
     subprocess.call(["/bin/bash", "-c", command])
     time.sleep(1)
     
     # Open the input box
     command = f"adb shell input tap 1191 152"
+    if debug is True:
+        print(f'Debug: {command}')
     subprocess.call(["/bin/bash", "-c", command])
     time.sleep(1)
 
 def open_chat():
     # Open the chat menu
     command = f"adb shell input tap 25 423"
+    if debug is True:
+        print(f'Debug: {command}')
     subprocess.call(["/bin/bash", "-c", command])
     
     # Open the input box
     command = f"adb shell input tap 677 1032"
+    if debug is True:
+        print(f'Debug: {command}')
     subprocess.call(["/bin/bash", "-c", command])
 
 def type_message(message):
@@ -119,7 +149,8 @@ def type_message(message):
 
     # Execute the command
     command = f'adb shell input text "{message}"'
-    print(command)
+    if debug is True:
+        print(f'Debug: {command}')
     subprocess.call(["/bin/bash", "-c", command])
 
 
