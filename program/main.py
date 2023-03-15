@@ -3,6 +3,7 @@ import os
 import subprocess
 import re
 import discord
+import time
 from dotenv import load_dotenv
 from discord import Intents
 from discord import app_commands
@@ -55,21 +56,52 @@ async def add(interaction: discord.Interaction, first_value: int, second_value: 
 # Note that other decorators will still refer to it as `text_to_send` in the code.
 @client.tree.command()
 @app_commands.rename(text_to_send='text')
-@app_commands.describe(text_to_send='Text to send in the current channel')
-async def send(interaction: discord.Interaction, text_to_send: str):
-    """Sends the text into the current channel."""
-    await interaction.response.send_message(text_to_send)
+@app_commands.describe(text_to_send='Text to send in CoC chat')
+async def relay(interaction: discord.Interaction, text_to_send: str):
+    """Sends a message to the Clash of Clans chat."""
+    await interaction.response.send_message(f'Sent: "{text_to_send}" to CoC chat')
+    open_chat()
+    type_message(text_to_send)
+    # Send an enter key event
+    command = "adb shell input keyevent KEYCODE_ENTER"
+    subprocess.call(["/bin/bash", "-c", command])
+
+@client.tree.command()
+@app_commands.describe(text_to_send='Text to send in CoC clan mail')
+async def mail(interaction: discord.Interaction, text_to_send: str):
+    """Sends a mail to the Clash of Clans clan mail system."""
+    await interaction.response.send_message(f'Sent: "{text_to_send}" to CoC clan mail')
+    open_clan_mail()
+    type_message(text_to_send)
+    # Hit Send
+    command = f"adb shell input tap 1191 152"
+    subprocess.call(["/bin/bash", "-c", command])
 
 def escape_special_chars(s):
     return re.sub(r'(?<!\\)([\'"\\()])', r'\\\1', s)
 
-def type_message(message):
-    # Escape special characters in the message
-    message = escape_special_chars(message)
+def open_clan_mail():
+    # Open Menu
+    command = f"adb shell input tap 76 65"
+    subprocess.call(["/bin/bash", "-c", command])
+    time.sleep(1)
+
+    # Open My Clan
+    command = f"adb shell input tap 815 72"
+    subprocess.call(["/bin/bash", "-c", command])
+    time.sleep(1)
     
-    # Replace spaces with %s
-    message = message.replace(" ", "\%s")
+    # Open Send Mail
+    command = f"adb shell input tap 1272 736"
+    subprocess.call(["/bin/bash", "-c", command])
+    time.sleep(1)
     
+    # Open the input box
+    command = f"adb shell input tap 1191 152"
+    subprocess.call(["/bin/bash", "-c", command])
+    time.sleep(1)
+
+def open_chat():
     # Open the chat menu
     command = f"adb shell input tap 25 423"
     subprocess.call(["/bin/bash", "-c", command])
@@ -78,13 +110,16 @@ def type_message(message):
     command = f"adb shell input tap 677 1032"
     subprocess.call(["/bin/bash", "-c", command])
 
+def type_message(message):
+    # Escape special characters in the message
+    message = escape_special_chars(message)
+    
+    # Replace spaces with %s
+    message = message.replace(" ", "\%s")
+
     # Execute the command
     command = f'adb shell input text "{message}"'
     print(command)
-    subprocess.call(["/bin/bash", "-c", command])
-
-    # Send an enter key event
-    command = "adb shell input keyevent KEYCODE_ENTER"
     subprocess.call(["/bin/bash", "-c", command])
 
 
