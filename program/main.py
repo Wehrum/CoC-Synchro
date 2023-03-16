@@ -1,17 +1,13 @@
 # bot.py
-import os
 import subprocess
-import re
 import discord
 import time
-from dotenv import load_dotenv
+import vars
 from discord import Intents
 from discord import app_commands
 
-load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-GUILD = os.getenv('DISCORD_GUILD')
-MY_GUILD = discord.Object(id=GUILD)
+
+MY_GUILD = discord.Object(id=vars.GUILD)
 
 class MyClient(discord.Client):
     def __init__(self, *, intents: discord.Intents):
@@ -35,8 +31,10 @@ class MyClient(discord.Client):
 
 intents = discord.Intents.all()
 client = MyClient(intents=intents)
+
 debug=True
 
+# Used for debugging
 @client.tree.command()
 async def hello(interaction: discord.Interaction):
     """Says hello!"""
@@ -50,53 +48,54 @@ async def hello(interaction: discord.Interaction):
     await interaction.followup.delete_message(message.id)
     await interaction.channel.send(f'Loading, {interaction.user.mention}', file=file)
 
+# Send Clash of Clans Chat Messages
 @client.tree.command()
-@app_commands.describe(
-    first_value='The first value you want to add something to',
-    second_value='The value you want to add to the first value',
-)
-async def add(interaction: discord.Interaction, first_value: int, second_value: int):
-    """Adds two numbers together."""
-    await interaction.response.send_message(f'{first_value} + {second_value} = {first_value + second_value}')
-
-# The rename decorator allows us to change the display of the parameter on Discord.
-# In this example, even though we use `text_to_send` in the code, the client will use `text` instead.
-# Note that other decorators will still refer to it as `text_to_send` in the code.
-@client.tree.command()
-@app_commands.rename(text_to_send='text')
+@app_commands.rename(text_to_send='message')
 @app_commands.describe(text_to_send='Text to send in CoC chat')
 async def relay(interaction: discord.Interaction, text_to_send: str):
     """Sends a message to the Clash of Clans chat."""
-    await interaction.response.send_message(f'Sending: "{text_to_send}" to CoC chat')
+
+    await interaction.response.send_message(f'Sending: "{text_to_send}" to CoC chat!', 
+                                            ephemeral=True, 
+                                            embed=embed_image(vars.image_loading))
     open_chat()
     type_message(text_to_send)
+    
+    message = await interaction.original_response()
+    
     # Send an enter key event
     command = "adb shell input keyevent KEYCODE_ENTER"
     subprocess.call(["/bin/bash", "-c", command])
-    await interaction.followup.edit_message("Sent!")
+    
+    await message.edit(content=f'Sent: "{text_to_send}" to CoC chat!',
+                       embed=embed_image(vars.image_checkmark))
 
+# Send Clash of Clans Mails
 @client.tree.command()
-@app_commands.rename(text_to_send='text')
+@app_commands.rename(text_to_send='message')
 @app_commands.describe(text_to_send='Text to send in CoC clan mail')
 async def mail(interaction: discord.Interaction, text_to_send: str):
     """Sends a mail to the Clash of Clans clan mail system."""
-    embed = discord.Embed()
-    embed.set_image(url="https://www.botech-shop.com/img/loader.gif")
-    await interaction.response.send_message(f'Sending: "{text_to_send}" to CoC clan mail', ephemeral=True, embed=embed)
+    
+    await interaction.response.send_message(f'Sending: "{text_to_send}" to CoC clan mail!', 
+                                            ephemeral=True, 
+                                            embed=embed_image(vars.image_loading))
+    
     message = await interaction.original_response()
     open_clan_mail()
     type_message(text_to_send)
-    # Hit Send
-    command = f"adb shell input tap 1191 152"
-    subprocess.call(["/bin/bash", "-c", command])
-    embed = discord.Embed()
-    embed.set_image(url="https://www.botech-shop.com/img/loader.gif")
-    await message.edit(content=f'Sent: "{text_to_send}" to CoC clan mail', embed="https://media.discordapp.net/attachments/1085328897199050782/1085632955466137711/OIP.jpg?width=36&height=36")
-    #await interaction.channel.send(f'Sent: "{text_to_send}" to CoC clan mail', file=file)
     
-
-def escape_special_chars(s):
-    return re.sub(r'(?<!\\)([\'"\\()])', r'\\\1', s)
+    # Hit Send
+    command = f"adb shell input tap 1180 500"
+    subprocess.call(["/bin/bash", "-c", command])
+    
+    await message.edit(content=f'Sent: "{text_to_send}" to CoC clan mail!', 
+                       embed=embed_image(vars.image_checkmark))
+    
+def embed_image(image):
+    embed = discord.Embed()
+    embed.set_image(url=image)
+    return embed
 
 def open_clan_mail():
     # Open Menu
@@ -121,7 +120,7 @@ def open_clan_mail():
     time.sleep(1)
     
     # Open the input box
-    command = f"adb shell input tap 1191 152"
+    command = f"adb shell input tap 950 280"
     if debug is True:
         print(f'Debug: {command}')
     subprocess.call(["/bin/bash", "-c", command])
@@ -133,16 +132,18 @@ def open_chat():
     if debug is True:
         print(f'Debug: {command}')
     subprocess.call(["/bin/bash", "-c", command])
+    time.sleep(1)
     
     # Open the input box
     command = f"adb shell input tap 677 1032"
     if debug is True:
         print(f'Debug: {command}')
     subprocess.call(["/bin/bash", "-c", command])
-
+    time.sleep(1)
+    
 def type_message(message):
     # Escape special characters in the message
-    message = escape_special_chars(message)
+    message = vars.escape_special_chars(message)
     
     # Replace spaces with %s
     message = message.replace(" ", "\%s")
@@ -174,7 +175,7 @@ def type_message(message):
 #     await ctx.send(f'Sending message: "{message}" to Clash')
 #     type_message(message)
 
-client.run(TOKEN)
+client.run(vars.TOKEN)
 
 
 
