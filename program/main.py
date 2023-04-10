@@ -5,7 +5,44 @@ import time
 import vars
 from discord import Intents
 from discord import app_commands
+import requests
+import json
 
+endpoint = vars.ENDPOINT
+subscription_key = vars.FORM_KEY
+model_id = "prebuilt-read"
+document_url = 'URL here'
+
+# Define the API endpoint URL and request headers
+api_url = f'{endpoint}/formrecognizer/documentModels/{model_id}:analyze?api-version=2022-08-31'
+headers = {
+    'Content-Type': 'application/json',
+    'Ocp-Apim-Subscription-Key': subscription_key
+}
+
+# Define the data to send in the request body
+data = {'urlSource': document_url}
+
+# Send the POST request and store the response
+response = requests.post(api_url, headers=headers, json=data)
+
+# Print the response text
+print(response.headers.get("Operation-Location"))
+
+headers = {'Ocp-Apim-Subscription-Key': subscription_key}
+
+# Send the GET request and store the response
+msg = "response here"
+
+# Print the response text
+response = requests.get(msg, headers=headers)
+
+json_dict = json.loads(response.text)
+content = json_dict['analyzeResult']['content']
+
+print(content)
+
+quit()
 
 MY_GUILD = discord.Object(id=vars.GUILD)
 
@@ -38,15 +75,8 @@ debug=True
 @client.tree.command()
 async def hello(interaction: discord.Interaction):
     """Says hello!"""
-    with open("loader.gif", "rb") as f:
-        file = discord.File(f)
-    await interaction.response.send_message(f'Loading, {interaction.user.mention}', file=file)
-    message = await interaction.original_response()
-    time.sleep(2)
-    with open("OIP.jpg", "rb") as f:
-        file = discord.File(f)
-    await interaction.followup.delete_message(message.id)
-    await interaction.channel.send(f'Loading, {interaction.user.mention}', file=file)
+    await interaction.response.send_message(f"hi")
+    get_ocr()
 
 # Send Clash of Clans Chat Messages
 @client.tree.command()
@@ -173,6 +203,34 @@ def get_screenshot():
     adb_command(command)
     
     # convert screen.png -crop 500x500+100+200 screen.png 
+
+def get_ocr():
+# Set API endpoint and subscription key
+    endpoint = vars.ENDPOINT
+    subscription_key = vars.FORM_KEY
+
+    # Set image path
+    api_url = endpoint + "/formrecognizer/v2.1/prebuilt/receipt/analyze"
+
+    # Set headers
+    headers = {
+        'Content-Type': 'image/png',
+        'Ocp-Apim-Subscription-Key': subscription_key
+    }
+
+    # Set file path
+    file_path = "screenshots/screenshot.png"
+
+    # Read file content
+    with open(file_path, "rb") as f:
+        data_bytes = f.read()
+
+    # Send request to API
+    response = requests.post(api_url, headers=headers, data=data_bytes)
+    print(response.json)
+
+    # Parse response JSON
+    # response_json = json.loads(response.text)
 
 # @client.event
 # async def on_ready():
