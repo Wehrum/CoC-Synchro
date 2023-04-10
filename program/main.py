@@ -102,7 +102,11 @@ def open_clan_mail():
     command = f"adb shell input tap 76 65"
     if debug is True:
         print(f'Debug: {command}')
-    subprocess.call(["/bin/bash", "-c", command])
+    # subprocess.call(["/bin/bash", "-c", command])
+    response = adb_command(command)
+    if (response != 0):
+        print("There was an error")
+        return
     time.sleep(1)
 
     # Open My Clan
@@ -154,6 +158,21 @@ def type_message(message):
         print(f'Debug: {command}')
     subprocess.call(["/bin/bash", "-c", command])
 
+def adb_command(command):
+    print("command was called")
+    response = subprocess.call(["/bin/bash", "-c", command])
+    if debug is True:
+        print(f'Debug: {command}')
+    if (response != 0):
+        print("test")
+        return response
+    return response
+
+def get_screenshot():
+    command = "adb exec-out screencap -p > screenshots/screen.png"
+    adb_command(command)
+    
+    # convert screen.png -crop 500x500+100+200 screen.png 
 
 # @client.event
 # async def on_ready():
