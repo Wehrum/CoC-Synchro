@@ -5,10 +5,65 @@ import time
 import vars
 from discord import Intents
 from discord import app_commands
+import requests
+import json
 import aiohttp
 import asyncio
+async def get_ocr():
+    # Define the request headers
+    endpoint = vars.ENDPOINT
+    subscription_key = vars.FORM_KEY
+    model_id = "prebuilt-read"
+    document_url = 'URL-HERE'
+    
+    # Define the URL
+    api_url = f'{endpoint}/formrecognizer/documentModels/{model_id}:analyze?api-version=2022-08-31'
+    headers = {
+        'Content-Type': 'application/json',
+        'Ocp-Apim-Subscription-Key': subscription_key
+    }
 
+    # Define the data to send in the request body
+    data = {'urlSource': document_url}
+
+    # Create a session to make the request
+    async with aiohttp.ClientSession(headers=headers) as session:
+        # Send the POST request and store the response
+        async with session.post(api_url, json=data) as response:
+            # Get the operation location from the response headers
+            operlocation = response.headers.get("Operation-Location")
+
+    headers = {'Ocp-Apim-Subscription-Key': subscription_key}
+
+    # Create another session to make the GET request
+    async with aiohttp.ClientSession(headers=headers) as session:
+        while True:
+            # Send the GET request and store the response
+            async with session.get(operlocation) as response:
+                json_dict = await response.json()
+
+                # Check the status of the operation
+                status = json_dict['status']
+                print(status)
+                if status == 'succeeded':
+                    #print(json_dict)
+                    pages = json_dict['analyzeResult']['pages']
+                    for page in pages:
+                        for word in page['words']:
+                            if 'confidence' in word and word['confidence'] > 0.8:
+                                print(word['content'])
+                    quit()
+                    # if json_dict['confidence'] > 0.8:
+                    #     content = json_dict['analyzeResult']['content']
+                    #     print(content)
+                    # return content
+
+            # Wait for some time before checking the status again
+            await asyncio.sleep(5)
+asyncio.run(get_ocr())
+quit()
 MY_GUILD = discord.Object(id=vars.GUILD)
+
 
 class MyClient(discord.Client):
     def __init__(self, *, intents: discord.Intents):
