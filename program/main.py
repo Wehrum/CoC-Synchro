@@ -5,8 +5,6 @@ import time
 import vars
 from discord import Intents
 from discord import app_commands
-import requests
-import json
 import aiohttp
 import asyncio
 
@@ -184,6 +182,8 @@ def get_screenshot():
     adb_command(command)
     
     # convert screen.png -crop 500x500+100+200 screen.png 
+    # convert screen.png -crop 657x870+92.8+100 output_image.png
+
 
 async def get_ocr():
     # Define the request headers

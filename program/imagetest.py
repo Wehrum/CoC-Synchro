@@ -27,11 +27,7 @@ mask_color = cv2.inRange(hsv, hsv_lower_color, hsv_upper_color)
 mask_combined = cv2.bitwise_or(mask_white, mask_color)
 
 # Apply the mask to the original image to extract colors
-color_extracted = cv2.bitwise_and(img, img, mask=mask_combined)
+result = cv2.bitwise_and(img, img, mask=mask_combined)
 
-# Display the extracted color image
-cv2.imshow('Extracted Colors', color_extracted)
-
-# Wait for a key press and then close the window
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+# Output extracted image as a new file
+cv2.imwrite("result.png", result)
